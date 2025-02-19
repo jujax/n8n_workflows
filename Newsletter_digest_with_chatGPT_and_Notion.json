@@ -1,0 +1,248 @@
+{
+  "name": "Newsletter digest with chatGPT and Notion",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Résume moi ce markdown en enlevant les pubs, traduit en français. transforme le en json avec un tableau d'articles avec:\n-nom de la newsletter (TLDR quelquechose) appelé \"letter_name\"\n-titre \"title\"\n-minutes de lecture \"reading_time\"\n-résumé \"resume\"\n-l'url \"url\"\n-la date de la newsletter (mets la dans chaque article plutot qu'une fois dans le json) \"newsletter_date\"\n-des tags pour classer l'article \"tags\"\nMets juste le json et rien d'autre",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "={{ $json.data }}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        460,
+        0
+      ],
+      "id": "7d39ce6e-9417-4d39-85fc-05105540740d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        200
+      ],
+      "id": "201e5f97-8d4a-4a60-9d76-20a03c9961c2",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "PoozpvLecMbpLYfZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "17232643-d475-802e-b7b8-d409466cfda6",
+          "mode": "list",
+          "cachedResultName": "Articles",
+          "cachedResultUrl": "https://www.notion.so/17232643d475802eb7b8d409466cfda6"
+        },
+        "title": "={{ $json.title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title",
+              "title": "={{ $json.title }}"
+            },
+            {
+              "key": "Lu|checkbox"
+            },
+            {
+              "key": "Date|date",
+              "includeTime": false,
+              "date": "={{ $json.newsletter_date }}"
+            },
+            {
+              "key": "reading time|number",
+              "numberValue": "={{ $json.reading_time }}"
+            },
+            {
+              "key": "resume|rich_text",
+              "textContent": "={{ $json.resume }}"
+            },
+            {
+              "key": "tags|multi_select",
+              "multiSelectValue": "={{ $json.tags }}"
+            },
+            {
+              "key": "URL|url",
+              "ignoreIfEmpty": true,
+              "urlValue": "={{ $json.url }}"
+            },
+            {
+              "key": "From|rich_text",
+              "textContent": "TLDR Webdev"
+            },
+            {
+              "key": "balek|checkbox"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "b4773bce-eab7-464c-8da7-1b9f3102c5c2",
+      "name": "Notion",
+      "credentials": {
+        "notionApi": {
+          "id": "MjTNgMnXz1TD3CEG",
+          "name": "Notion account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.text = JSON.parse(item.json.text.split(\"json\\n\")[1].replace(\"```\", \"\"))\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        0
+      ],
+      "id": "fda28ba2-9d5c-453a-8000-ce307e7df07e",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "text.articles",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "f2591206-fd63-4f85-a7d7-9ae8d0ef9aa3",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "66ed7fb6-d0a3-437b-a843-e1eb98241896",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "92abe079-57d3-4e17-900b-3f9ebae00f9c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cf6e44250fdf0cbdb4e21b91e108c36b4b3e013e9e72d1f88bb30ba6f6f6d9c7"
+  },
+  "id": "khUbhkhQqFl98U5w",
+  "tags": [
+    {
+      "createdAt": "2025-02-11T19:52:14.370Z",
+      "updatedAt": "2025-02-11T19:52:14.370Z",
+      "id": "BQk9YfcY8fyG9iTJ",
+      "name": "tldr"
+    },
+    {
+      "createdAt": "2025-02-11T19:52:14.364Z",
+      "updatedAt": "2025-02-11T19:52:14.364Z",
+      "id": "JqvSfJ1nHegL8qHw",
+      "name": "ai"
+    },
+    {
+      "createdAt": "2025-02-11T19:52:14.359Z",
+      "updatedAt": "2025-02-11T19:52:14.359Z",
+      "id": "NRfOpn1Sv8Mv3rWn",
+      "name": "newsletter"
+    }
+  ]
+}

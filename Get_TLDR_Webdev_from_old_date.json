@@ -1,0 +1,206 @@
+{
+  "name": "Get TLDR Webdev from old date",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://tldr.tech/webdev/{{ $json.businessDays }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -340,
+        60
+      ],
+      "id": "de163254-b47a-45a7-8bc7-6cb47f410c06",
+      "name": "HTTP Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d0815967-1669-442b-a3a1-cc290a0b5724",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "formTitle": "Choix date ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "since",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "to",
+              "fieldType": "date",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1520,
+        60
+      ],
+      "id": "60099330-114d-424e-bf27-09697d1c3f93",
+      "name": "On form submission",
+      "webhookId": "5c6d5ec2-7203-43fe-ada1-0118da616e0b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const since = new Date($json[\"since\"]);  // Récupère la date de début\nconst to = new Date($json[\"to\"]);        // Récupère la date de fin\n\nlet current = new Date(since);\nconst businessDays = [];\n\nwhile (current <= to) {\n    const day = current.getDay();  // 0 = Dimanche, 6 = Samedi\n    if (day !== 0 && day !== 6) {\n        businessDays.push(current.toISOString().split(\"T\")[0]);\n    }\n    current.setDate(current.getDate() + 1);\n}\n\nreturn [{ businessDays }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1300,
+        60
+      ],
+      "id": "f85f9a8d-8548-4e59-916e-712f6cd3baf5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "businessDays",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        60
+      ],
+      "id": "6722098e-6a48-44e8-9947-f3d770e1c6f9",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "fl7ad7tS8F8uou9m",
+          "mode": "list",
+          "cachedResultName": "Newsletter digest with chatGPT and Notion"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        60
+      ],
+      "id": "aa69e5f1-b8e7-48f2-b249-429c54bcd485",
+      "name": "Execute Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f9c5a761-6e57-44cf-afc6-536c1af6b3f8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cf6e44250fdf0cbdb4e21b91e108c36b4b3e013e9e72d1f88bb30ba6f6f6d9c7"
+  },
+  "id": "GotiDjbQ2wJxCzBI",
+  "tags": [
+    {
+      "createdAt": "2025-02-11T19:52:14.370Z",
+      "updatedAt": "2025-02-11T19:52:14.370Z",
+      "id": "BQk9YfcY8fyG9iTJ",
+      "name": "tldr"
+    },
+    {
+      "createdAt": "2025-02-11T19:52:14.364Z",
+      "updatedAt": "2025-02-11T19:52:14.364Z",
+      "id": "JqvSfJ1nHegL8qHw",
+      "name": "ai"
+    },
+    {
+      "createdAt": "2025-02-11T19:52:14.359Z",
+      "updatedAt": "2025-02-11T19:52:14.359Z",
+      "id": "NRfOpn1Sv8Mv3rWn",
+      "name": "newsletter"
+    }
+  ]
+}
